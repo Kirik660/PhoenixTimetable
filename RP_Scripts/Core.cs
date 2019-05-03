@@ -21,6 +21,8 @@ namespace Phoenix_Kiber_Ogurchik
 
         bool aboutProjectOpen;
         bool enterGroupOpen;
+        bool newsOpen;
+        bool calendarOpen;
 
         private int cur_day = 0;
         private List<GameObject> lessons_inst = new List<GameObject>();
@@ -32,7 +34,8 @@ namespace Phoenix_Kiber_Ogurchik
         private int sp_month;
         private DateTime sp_Date;
 
-        private const string GetScheduleUrl = "http://localhost/ordeal_server_alfa_1/GetGroupRP.php";
+        //private const string GetScheduleUrl = "http://localhost/ordeal_server_alfa_1/GetGroupRP.php";
+        private const string GetScheduleUrl = "https://ds305.vokinsel.com/ordeal_server_alfa/GetGroupRP.php";
         
 
         private void Start()
@@ -72,7 +75,7 @@ namespace Phoenix_Kiber_Ogurchik
         {
             switch (value)
             {
-                case 0:
+                case 0: //расписание
                     if (aboutProjectOpen)
                     {
                         parametrs.aboutProject.SetActive(false); //закроем панель если открыта
@@ -83,25 +86,96 @@ namespace Phoenix_Kiber_Ogurchik
                         parametrs.groupObject.SetActive(false); //закроем панель если открыта
                         enterGroupOpen = false;
                     }
+                    if (newsOpen)
+                    {
+                        parametrs.newsPanel.SetActive(false); //закроем панель если открыта
+                        enterGroupOpen = false;
+                    }
+                    if (calendarOpen)
+                    {
+                        parametrs.calendarPanel.SetActive(false); //закроем панель если открыта
+                        calendarOpen = false;
+                    }
+
+                    parametrs.groupInfo.text = "Группа: " + groupNumber + (parametrs.useCurWeek ? " " + ((curWeek == Week_Type.Chis) ? "ЧИСЛ" : "ЗНАМ") : "");
+
                     break;
-                case 1:
+                case 1: //настройки
                     if (aboutProjectOpen)
                     {
                         parametrs.aboutProject.SetActive(false); //закроем панель если открыта
                         aboutProjectOpen = false;
+                    }
+                    if (newsOpen)
+                    {
+                        parametrs.newsPanel.SetActive(false); //закроем панель если открыта
+                        enterGroupOpen = false;
+                    }
+                    if (calendarOpen)
+                    {
+                        parametrs.calendarPanel.SetActive(false); //закроем панель если открыта
+                        calendarOpen = false;
                     }
                     parametrs.groupObject.SetActive(true); //откроем панель для задания номера группы
                     enterGroupOpen = true;
                     break;
-                case 2:
-                    NewsPage(newsUrl); //Запустим в браузере страницу РГРТУ
-                    parametrs.dropdown.value = 0; //Вернемся к расписанию
-                    break;
-                case 3:
+                case 2: //календарь
+                    if (aboutProjectOpen)
+                    {
+                        parametrs.aboutProject.SetActive(false); //закроем панель если открыта
+                        aboutProjectOpen = false;
+                    }
                     if (enterGroupOpen)
                     {
                         parametrs.groupObject.SetActive(false); //закроем панель если открыта
                         enterGroupOpen = false;
+                    }
+                    if (newsOpen)
+                    {
+                        parametrs.newsPanel.SetActive(false); //закроем панель если открыта
+                        enterGroupOpen = false;
+                    }
+                    parametrs.groupInfo.text = "Календарь";
+                    parametrs.calendarPanel.SetActive(true);
+                    calendarOpen = true;
+                    break;
+                case 3: //новости
+                    if (aboutProjectOpen)
+                    {
+                        parametrs.aboutProject.SetActive(false); //закроем панель если открыта
+                        aboutProjectOpen = false;
+                    }
+                    if (enterGroupOpen)
+                    {
+                        parametrs.groupObject.SetActive(false); //закроем панель если открыта
+                        enterGroupOpen = false;
+                    }
+                    if (calendarOpen)
+                    {
+                        parametrs.calendarPanel.SetActive(false); //закроем панель если открыта
+                        calendarOpen = false;
+                    }
+
+                    parametrs.newsPanel.SetActive(true);
+                    parametrs.rss_News.GetNews();
+                    newsOpen = true;
+                    parametrs.groupInfo.text = "Новости";
+                    break;
+                case 4: //о программе
+                    if (enterGroupOpen)
+                    {
+                        parametrs.groupObject.SetActive(false); //закроем панель если открыта
+                        enterGroupOpen = false;
+                    }
+                    if(newsOpen)
+                    {
+                        parametrs.newsPanel.SetActive(false); //закроем панель если открыта
+                        enterGroupOpen = false;
+                    }
+                    if (calendarOpen)
+                    {
+                        parametrs.calendarPanel.SetActive(false); //закроем панель если открыта
+                        calendarOpen = false;
                     }
                     parametrs.aboutProject.SetActive(true); //откроем панель "О проекте"
                     aboutProjectOpen = true;
@@ -169,7 +243,7 @@ namespace Phoenix_Kiber_Ogurchik
 
         string GetCurentLesson(Lesson lesson, Image lImg) //генерация текста для одного предмета
         {
-            string l = "<size=8>";
+            string l = "<size=6>";
 
             switch (lesson.hour)
             {
@@ -235,7 +309,7 @@ namespace Phoenix_Kiber_Ogurchik
                     break;
             }
 
-            l += lesson.lesson_Name + "\n<size=10>" + lesson.teachersName;
+            l += lesson.lesson_Name + "\n<size=7>" + lesson.teachersName;
 
             if (!string.IsNullOrEmpty(lesson.room))
                 l += " " + "а." + lesson.room + "</size>";
@@ -272,9 +346,9 @@ namespace Phoenix_Kiber_Ogurchik
                     if(curDate.Date <= counter.Date)
                     {
                         if ((weekT % 2) == 0)
-                            curWeek = Week_Type.Znam;
-                        else
                             curWeek = Week_Type.Chis;
+                        else
+                            curWeek = Week_Type.Znam;
 
                         break;
                     }
@@ -322,6 +396,8 @@ namespace Phoenix_Kiber_Ogurchik
         {
             Application.OpenURL(url);
         }
+
+
         #endregion
 
         #region Netwroking
@@ -478,8 +554,12 @@ namespace Phoenix_Kiber_Ogurchik
         public GameObject errorPanel;
         public GameObject specialDaySet;
         public GameObject specialMonthSet;
+        public GameObject newsPanel;
+        public GameObject calendarPanel;
         public Transform parent;
         public GameObject element_Prefab;
+
+        public rss_news rss_News;
 
         public bool useCurWeek;
         public bool getSpecialDay;
