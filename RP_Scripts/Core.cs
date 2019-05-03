@@ -34,8 +34,7 @@ namespace Phoenix_Kiber_Ogurchik
         private int sp_month;
         private DateTime sp_Date;
 
-        //private const string GetScheduleUrl = "http://localhost/ordeal_server_alfa_1/GetGroupRP.php";
-        private const string GetScheduleUrl = "https://ds305.vokinsel.com/ordeal_server_alfa/GetGroupRP.php";
+        private const string GetScheduleUrl = "http://localhost/ordeal_server_alfa_1/GetGroupRP.php";
         
 
         private void Start()
