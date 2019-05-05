@@ -23,18 +23,21 @@ namespace Phoenix_Kiber_Ogurchik
         bool enterGroupOpen;
         bool newsOpen;
         bool calendarOpen;
+        bool notesOpen;
 
         private int cur_day = 0;
         private List<GameObject> lessons_inst = new List<GameObject>();
         private string groupNumber = "";
         private bool weChengeGroup;
         private Week_Type curWeek = Week_Type.Chis;
+        private Week_Type checkWeek;
 
         private int sp_day;
         private int sp_month;
         private DateTime sp_Date;
 
-        private const string GetScheduleUrl = "http://localhost/ordeal_server_alfa_1/GetGroupRP.php";
+        //private const string GetScheduleUrl = "http://localhost/ordeal_server_alfa_1/GetGroupRP.php";
+        private const string GetScheduleUrl = "https://ds305.vokinsel.com/ordeal_server_alfa/GetGroupRP.php";
         
 
         private void Start()
@@ -43,6 +46,8 @@ namespace Phoenix_Kiber_Ogurchik
             curSelectedDay.position = curDayPosition.position;
             cur_day = 0;
 
+            GetCurrntWeek();
+
             if (PlayerPrefs.HasKey("Group")) //проверим на наличие сохраненного номера группы
                 groupNumber = PlayerPrefs.GetString("Group");
 
@@ -50,8 +55,12 @@ namespace Phoenix_Kiber_Ogurchik
             {
                 if(PlayerPrefs.HasKey("CurWeek"))
                 {
-                    parametrs.useCurWeek = bool.Parse(PlayerPrefs.GetString("CurWeek"));
-                    parametrs.useWeekToggler.isOn = parametrs.useCurWeek;
+                    parametrs.useSpecWeek = bool.Parse(PlayerPrefs.GetString("CurWeek"));
+
+                    if (parametrs.useSpecWeek)
+                        parametrs.useWeekToggler.isOn = true;
+                    else
+                        parametrs.defaultWeekToggler.isOn = true;
                 }
 
                 if (PlayerPrefs.HasKey("LastSession")) //проверим на наличие сохраненного расписания
@@ -67,6 +76,32 @@ namespace Phoenix_Kiber_Ogurchik
             {
                 parametrs.dropdown.value = 1; //перейдем к панели ввода группы еслт ранее группа не задавалась
             }
+        }
+
+        private void GetCurrntWeek()
+        {
+            DateTime curDate = DateTime.Now;
+            DateTime counter = startDate;
+
+            int weekT = 0;
+
+            while (curDate.Date > counter.Date)
+            {
+                weekT++;
+                counter = counter.Date.AddDays(7);
+
+                if (curDate.Date <= counter.Date)
+                {
+                    if ((weekT % 2) == 0)
+                        curWeek = Week_Type.Znam;
+                    else
+                        curWeek = Week_Type.Chis;
+
+                    break;
+                }
+            }
+
+            checkWeek = curWeek;
         }
 
         #region Menu
@@ -95,8 +130,13 @@ namespace Phoenix_Kiber_Ogurchik
                         parametrs.calendarPanel.SetActive(false); //закроем панель если открыта
                         calendarOpen = false;
                     }
+                    if (notesOpen)
+                    {
+                        parametrs.notesPanel.SetActive(false);
+                        notesOpen = false;
+                    }
 
-                    parametrs.groupInfo.text = "Группа: " + groupNumber + (parametrs.useCurWeek ? " " + ((curWeek == Week_Type.Chis) ? "ЧИСЛ" : "ЗНАМ") : "");
+                    parametrs.groupInfo.text = "Группа: " + groupNumber + (parametrs.useSpecWeek ? " " + ((checkWeek == Week_Type.Chis) ? "ЧИСЛ" : "ЗНАМ") : "");
 
                     break;
                 case 1: //настройки
@@ -114,6 +154,11 @@ namespace Phoenix_Kiber_Ogurchik
                     {
                         parametrs.calendarPanel.SetActive(false); //закроем панель если открыта
                         calendarOpen = false;
+                    }
+                    if (notesOpen)
+                    {
+                        parametrs.notesPanel.SetActive(false);
+                        notesOpen = false;
                     }
                     parametrs.groupObject.SetActive(true); //откроем панель для задания номера группы
                     enterGroupOpen = true;
@@ -134,11 +179,42 @@ namespace Phoenix_Kiber_Ogurchik
                         parametrs.newsPanel.SetActive(false); //закроем панель если открыта
                         enterGroupOpen = false;
                     }
+                    if(notesOpen)
+                    {
+                        parametrs.notesPanel.SetActive(false);
+                        notesOpen = false;
+                    }
                     parametrs.groupInfo.text = "Календарь";
                     parametrs.calendarPanel.SetActive(true);
                     calendarOpen = true;
                     break;
-                case 3: //новости
+                case 3:
+                    if (aboutProjectOpen)
+                    {
+                        parametrs.aboutProject.SetActive(false); //закроем панель если открыта
+                        aboutProjectOpen = false;
+                    }
+                    if (enterGroupOpen)
+                    {
+                        parametrs.groupObject.SetActive(false); //закроем панель если открыта
+                        enterGroupOpen = false;
+                    }
+                    if (newsOpen)
+                    {
+                        parametrs.newsPanel.SetActive(false); //закроем панель если открыта
+                        enterGroupOpen = false;
+                    }
+                    if (calendarOpen)
+                    {
+                        parametrs.calendarPanel.SetActive(false); //закроем панель если открыта
+                        calendarOpen = false;
+                    }
+
+                    parametrs.groupInfo.text = "Заметки";
+                    parametrs.notesPanel.SetActive(true);
+                    notesOpen = true;
+                    break;
+                case 4: //новости
                     if (aboutProjectOpen)
                     {
                         parametrs.aboutProject.SetActive(false); //закроем панель если открыта
@@ -154,13 +230,18 @@ namespace Phoenix_Kiber_Ogurchik
                         parametrs.calendarPanel.SetActive(false); //закроем панель если открыта
                         calendarOpen = false;
                     }
+                    if (notesOpen)
+                    {
+                        parametrs.notesPanel.SetActive(false);
+                        notesOpen = false;
+                    }
 
                     parametrs.newsPanel.SetActive(true);
                     parametrs.rss_News.GetNews();
                     newsOpen = true;
                     parametrs.groupInfo.text = "Новости";
                     break;
-                case 4: //о программе
+                case 5: //о программе
                     if (enterGroupOpen)
                     {
                         parametrs.groupObject.SetActive(false); //закроем панель если открыта
@@ -175,6 +256,11 @@ namespace Phoenix_Kiber_Ogurchik
                     {
                         parametrs.calendarPanel.SetActive(false); //закроем панель если открыта
                         calendarOpen = false;
+                    }
+                    if (notesOpen)
+                    {
+                        parametrs.notesPanel.SetActive(false);
+                        notesOpen = false;
                     }
                     parametrs.aboutProject.SetActive(true); //откроем панель "О проекте"
                     aboutProjectOpen = true;
@@ -199,11 +285,11 @@ namespace Phoenix_Kiber_Ogurchik
 
             for (int l = 0; l < days[cur_day].lessons.Length; l++)
             {
-                if (parametrs.useCurWeek && (days[cur_day].lessons[l].week == curWeek || days[cur_day].lessons[l].week == Week_Type.Default))
+                if (parametrs.useSpecWeek && (days[cur_day].lessons[l].week == checkWeek || days[cur_day].lessons[l].week == Week_Type.Default))
                 {
                     GenLessons(l);
                 }
-                else if(!parametrs.useCurWeek)
+                else if(!parametrs.useSpecWeek)
                 {
                     GenLessons(l);
                 }
@@ -276,6 +362,7 @@ namespace Phoenix_Kiber_Ogurchik
             {
                 case Week_Type.Default:
                     l += " ";
+					lImg.color = parametrs.default_color;
                     break;
                 case Week_Type.Chis:
                     string w = " ЧИСЛ. ";
@@ -330,30 +417,6 @@ namespace Phoenix_Kiber_Ogurchik
 
         public void GetCurrentList(string msg) //преобразование сообщения в расписание
         {
-            if (parametrs.useCurWeek)
-            {
-                DateTime curDate = DateTime.Now;
-                DateTime counter = startDate;
-
-                int weekT = 0;
-
-                while (curDate.Date > counter.Date)
-                {
-                    weekT++;
-                    counter = counter.Date.AddDays(7);
-
-                    if(curDate.Date <= counter.Date)
-                    {
-                        if ((weekT % 2) == 0)
-                            curWeek = Week_Type.Chis;
-                        else
-                            curWeek = Week_Type.Znam;
-
-                        break;
-                    }
-                }
-            }
-
             string dop;
 
             dop = GetDataValue(msg, "Monday:", "|");
@@ -382,7 +445,7 @@ namespace Phoenix_Kiber_Ogurchik
 
             Generate();
 
-            parametrs.groupInfo.text = "Группа: " + groupNumber + (parametrs.useCurWeek ? " " + ((curWeek == Week_Type.Chis) ? "ЧИСЛ" : "ЗНАМ") : "");
+            parametrs.groupInfo.text = "Группа: " + groupNumber + (parametrs.useSpecWeek ? " " + ((checkWeek == Week_Type.Chis) ? "ЧИСЛ" : "ЗНАМ") : "");
 
             weChengeGroup = true;
 
@@ -416,11 +479,25 @@ namespace Phoenix_Kiber_Ogurchik
 
         public void SetOnlyCurrentWeek(bool value)
         {
-            if(parametrs.useCurWeek != value)
+            if(parametrs.useSpecWeek != value)
             {
-                parametrs.useCurWeek = value;
+                parametrs.useSpecWeek = value;
                 parametrs.useSpecialDayToggler.isOn = false;
+                checkWeek = curWeek;
                 PlayerPrefs.SetString("CurWeek", value.ToString());
+            }
+        }
+
+        public void SetOnlyNextWeek(bool value)
+        {
+            if (parametrs.useSpecWeek != value)
+            { 
+                parametrs.useSpecWeek = value;
+
+                if (curWeek == Week_Type.Chis)
+                    checkWeek = Week_Type.Znam;
+                else
+                    checkWeek = Week_Type.Chis;
             }
         }
 
@@ -453,7 +530,7 @@ namespace Phoenix_Kiber_Ogurchik
                 parametrs.dropdown.value = 0;
                 Generate();
 
-                parametrs.groupInfo.text = "Группа: " + groupNumber + (parametrs.useCurWeek ? " " + ((curWeek == Week_Type.Chis) ? "ЧИСЛ" : "ЗНАМ") : "");
+                parametrs.groupInfo.text = "Группа: " + groupNumber + (parametrs.useSpecWeek ? " " + ((checkWeek == Week_Type.Chis) ? "ЧИСЛ" : "ЗНАМ") : "");
             }
         }
 
@@ -547,6 +624,7 @@ namespace Phoenix_Kiber_Ogurchik
         public Text groupInfo;
         public InputField groupInput;
         public Toggle useWeekToggler;
+        public Toggle defaultWeekToggler;
         public Toggle useSpecialDayToggler;
         public GameObject groupObject;
         public GameObject aboutProject;
@@ -555,14 +633,16 @@ namespace Phoenix_Kiber_Ogurchik
         public GameObject specialMonthSet;
         public GameObject newsPanel;
         public GameObject calendarPanel;
+        public GameObject notesPanel;
         public Transform parent;
         public GameObject element_Prefab;
 
         public rss_news rss_News;
 
-        public bool useCurWeek;
+        public bool useSpecWeek;
         public bool getSpecialDay;
 
+		public Color default_color = Color.gray;
         public Color chisl_color = Color.cyan;
         public Color znam_color = Color.gray;
         public string errorNullMsg = "Ошибка, отсутствует соединение с сервером";
